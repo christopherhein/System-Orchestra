@@ -1,0 +1,14 @@
+
+Deploy Help
+
+To use this deployment method for your server, first setup up the necessary file in config/deploy.php
+	Start by entering in your application name as it exactly as it appears in GitHub
+	Than enter in the repository url that you can get from GitHub
+	Now setup all the ssh connections username, server, and location
+	Now you good to go!
+	The first push should always be passed with --initial at the end to setup all initial files and folders
+Parameters:	--help, --initial, more coming soon...
+	--help
+		Read about all the variables and parameters you can pass into the deploy script for easy of use.
+	--initial
+		Passing the initial will allow the application to be posted while creating a directory for past releases and backups.

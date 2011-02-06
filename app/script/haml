@@ -1,0 +1,88 @@
+#!/usr/bin/php
+<?php
+/**
+* Upload Script 
+*
+* Fired from the CMD Line using 'php script/upload'
+* This is to make the frontend/ editable with the php uploader
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+
+require(dirname(dirname(__FILE__))."/config/definitions.php");
+
+date_default_timezone_set('UTC');
+
+if(isset($argv[1])){
+	if($argv[1] == '--help') {
+
+		$file = include('/usr/local/orchestra/man/scripts/upload');
+		echo $file;
+
+	} elseif($argv[1] == 'setup') {
+		echo "\nSetting Up HAML\n";
+		exec("chmod -R 777 tmp/haml/ ;");
+		echo "\n\t REMOVED :: application.html.orc";
+		exec("rm app/views/layouts/application.html.orc");
+		echo "\n\t CREATED :: application.html.haml";
+		$app_open = fopen(VIEWS.'layouts/application.html.haml', 'w');
+		$app_data = '= $cache->start();
+!!! 5
+%html
+  %head
+    = $helpers->meta_tags();
+    = $helpers->meta_orch();
+
+    = $html->javascript_link("/javascripts/jquery-1.4.4.min.js");
+
+  %body
+    !! layouts/header.html
+    = $views->yield();
+    !! layouts/footer.html
+
+= $cache->end();';
+		$app_write = fwrite($app_open, $app_data);
+		$app_close = fclose($app_open);
+		echo "\n\t REMOVED :: _header.html.orc";
+		exec("rm app/views/layouts/_header.html.orc");
+		echo "\n\t CREATED :: header.html.haml";
+		$header_open = fopen(VIEWS.'layouts/header.html.haml', 'w');
+		$header_data = '';
+		$header_write = fwrite($header_open, $header_data);
+		$header_close = fclose($header_open);
+		echo "\n\t REMOVED :: _footer.html.orc";
+		exec("rm app/views/layouts/_footer.html.orc");
+		echo "\n\t CREATED :: footer.html.haml";
+		$footer_open = fopen(VIEWS.'layouts/footer.html.haml', 'w');
+		$footer_data = '';
+		$footer_write = fwrite($footer_open, $footer_data);
+		$footer_close = fclose($footer_open);
+		echo "\n\t REMOVED :: splash.html.orc";
+		exec("rm app/views/pages/splash.html.orc");
+		echo "\n\t CREATED :: splash.html.haml";
+		$splash_open = fopen(VIEWS.'pages/splash.html.haml', 'w');
+		$splash_data = '%h1 New Orchestra Application';
+		$splash_write = fwrite($splash_open, $splash_data);
+		$splash_close = fclose($splash_open);
+		exec("chmod -R 777 app/views/ ;");
+		echo "All finished!\n\n";
+	} elseif($argv[1] == 'clear') {
+		echo "\nClearing Up HAML Cache\n";
+		exec("rm -rf tmp/haml/ ;");
+		echo "Rebuilding HAML directory\n";
+		exec("mkdir tmp/haml/ ;");
+		echo "Setting Permissions \n";
+		exec("chmod -R 777 tmp/haml/ ;");
+		exec("chmod -R 777 app/views/ ;");
+		echo "All finished!\n\n";
+	}
+}	else {
+	echo "\n You need to have some sort of query \n Try running 'php script/haml --help  \n\n";
+}

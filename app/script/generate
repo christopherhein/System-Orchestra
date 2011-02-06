@@ -1,0 +1,334 @@
+#!/usr/bin/php
+<?php
+/**
+* Deploy Script 
+*
+* Fired from thw CMD Line using 'php script/deploy'
+* Variables may be passed in for db merging and db rebuilding on the live server
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+require(dirname(dirname(__FILE__)).'/config/definitions.php');
+require(CONFIG.'config.php');
+require(LIB."framework/inflect.php");
+$inflect = new Inflect();
+
+if($argv[1] == '--help' || $argv[1] == '') {
+
+	$file = include('/usr/local/orchestra/man/scripts/generate');
+	echo $file;
+
+} else if($argv[1] == 'controller') {
+	$page = strtolower($argv[2]);
+	$controller = CONTROLLERS.$inflect->pluralize($page).'_controller.php';
+	$helper = HELPERS.$inflect->pluralize($page).'_helper.php';
+	$routes = CONFIG.'routes.php';
+	$action_array = array();
+	if(isset($argv[3])) {
+		$action = strtolower($argv[3]);
+		$action_array = split(",", $action);
+	} else { 
+		$action_array = "index";
+	}
+
+		// Create Controller
+	if(file_exists($controller)) {
+		echo "\n Looks like you've already created that page! \n\n";
+	} else {
+		$controller_open = fopen($controller, 'w') or die('somethings gone terribly wrong!');
+		$controller_data = "<?php
+class ".ucfirst($inflect->pluralize($page))."Controller extends ApplicationController {
+
+";
+
+	foreach($action_array as $a) {
+	$controller_data .= "
+	function ".$a."() {
+
+	}
+";
+	}
+
+	 $controller_data .= "
+
+}";
+		$controller_write = fwrite($controller_open, $controller_data);
+		$controller_close = fclose($controller_open);
+
+			// Create Helper
+		if(!file_exists($helper)) {
+			$helper_open = fopen($helper, 'w');
+			$helper_data = "<?php
+class ".ucfirst($inflect->pluralize($page))."Helper extends ApplicationHelper {
+
+}";
+			$helper_write = fwrite($helper_open, $helper_data);
+			$helper_close = fclose($helper_open);
+		}
+	
+			// Create Views
+		$make_views = mkdir(VIEWS.$inflect->pluralize($page));
+		$view_dir = $inflect->pluralize($page);
+		if($make_views) {
+			foreach($action_array as $a) {
+				if($app['haml'] != true) {
+					$view_open = fopen(VIEWS.$view_dir.'/'.$a.'.html.orc', 'w');
+					$view_data = "<h3>".$view_dir."/".$a." created. To edit open mvc/views/".$view_dir."/".$a.".html.orc</h3>";
+					$view_write = fwrite($view_open, $view_data);
+					$view_close = fclose($view_open);
+					echo "\n\t CREATED :: ".$a.".html.orc";
+				} else {
+					$view_open = fopen(VIEWS.$view_dir.'/'.$a.'.html.haml', 'w');
+					$view_data = "%h3 ".$view_dir."/".$a." created. To edit open mvc/views/".$view_dir."/".$a.".html.haml";
+					$view_write = fwrite($view_open, $view_data);
+					$view_close = fclose($view_open);
+					echo "\n\t CREATED :: ".$a.".html.haml";
+				}
+			}
+		}
+
+		if(file_exists($routes)) {
+			foreach($action_array as $a) {
+				$route_open = fopen($routes, 'a');
+				$route_data = "\n\$pages['".$view_dir."/".$a."'] = array( \n";
+				$route_data .= "\t 'url'         	=> '/".$view_dir."/".$a."', \n";
+				$route_data .= "\t 'controller'		=> '".$view_dir."', \n";
+				$route_data .= "\t 'action'      	=> '".$a."', \n";
+				$route_data .= "); \n";
+				$route_write = fwrite($route_open, $route_data);
+				$route_close = fclose($route_open);
+			}
+		}
+	}
+} else if($argv[1] == 'resource') {
+	$page = strtolower($argv[2]);
+	$controller = CONTROLLERS.$inflect->pluralize($page).'_controller.php';
+	$helper = HELPERS.$inflect->pluralize($page).'_helper.php';
+	$model = MODELS.$inflect->singularize($page).'.php';
+	$routes = CONFIG.'routes.php';
+	$test = TEST.ucfirst($inflect->pluralize($page))."Test.php";
+	$action_array = array("index", "show", "new_item", "edit", "_form");
+	$db_columns = str_replace("{", "'", str_replace("}", "'", str_replace(":", " => ", str_replace(", ", "', \n\t\t\t'", $argv[3]))));
+
+		// Create Controller
+	if(file_exists($controller)) {
+		echo "\n Looks like you've already created that page! \n\n";
+	} else {
+		$controller_open = fopen($controller, 'w') or die('somethings gone terribly wrong!');
+		$controller_data = "<?php
+class ".ucfirst($inflect->pluralize($page)).'Controller extends ApplicationController {
+	
+	function index($format) {
+		$'.$inflect->pluralize($page).' = $this->'.$inflect->singularize($page).'->find();
+		$this->set("'.$inflect->pluralize($page).'", $'.$inflect->pluralize($page).');
+		$this->render($format, $'.$inflect->pluralize($page).');
+	}
+
+	function show($format, $id) {
+		$'.$inflect->singularize($page).' = $this->'.$inflect->singularize($page).'->find_by_id($id);
+		$this->set("'.$inflect->singularize($page).'", $'.$inflect->singularize($page).');
+		$this->render($format, $'.$inflect->singularize($page).');
+	}
+	
+	function new_item() {
+	}
+	
+	function create($format, $params) {
+		$'.$inflect->singularize($page).' = $this->'.$inflect->singularize($page).'->new()->save($params);
+		if($'.$inflect->singularize($page).') {
+			$this->notice(array(\'info\' => "'.$inflect->pluralize($page).' created."));
+		  $this->redirect_to("'.$inflect->pluralize($page).'", array(\'page\' => \'index\'));
+		} else {
+			$this->notice(array(\'error\' => "'.$inflect->singularize($page).' could not be created."));
+		  $this->redirect_to("'.$inflect->pluralize($page).'", array(\'page\' => \'new\'));
+		}
+	}
+
+	function edit($format, $id) {
+		$'.$inflect->singularize($page).' = $this->'.$inflect->singularize($page).'->find_by_id($id);
+		$this->set("'.$inflect->singularize($page).'", $'.$inflect->singularize($page).');
+	}
+	
+	function update($format, $params) {
+		$'.$inflect->singularize($page).' = $this->'.$inflect->singularize($page).'->save($params);
+		if($'.$inflect->singularize($page).') {
+			$this->notice(array(\'info\' => "'.$inflect->singularize($page).' updated."));
+		  $this->redirect_to("'.$inflect->pluralize($page).'", array(\'page\' => \'index\'));
+		} else {
+			$this->notice(array(\'error\' => "'.$inflect->singularize($page).' could not be updated."));
+		  $this->redirect_to("'.$inflect->pluralize($page).'", array(\'page\' => \'new\'));
+		}
+	}
+
+	function destroy($format, $id) {
+		$'.$inflect->singularize($page).' = $this->'.$inflect->singularize($page).'->destroy($id);
+		if($'.$inflect->singularize($page).') {
+		  $this->notice(array(\'info\' => "'.$inflect->singularize($page).' deleted."));
+  		$this->redirect_to($this->'.$inflect->pluralize($page).'_path());
+		} else {
+		  $this->notice(array(\'error\' => "'.$inflect->singularize($page).' could not be deleted."));
+  		$this->redirect_to($this->'.$inflect->pluralize($page).'_show_path($id));
+		}
+	}
+	
+}';
+		$controller_write = fwrite($controller_open, $controller_data);
+		$controller_close = fclose($controller_open);
+		echo "\n\t CREATED :: ".ucfirst($inflect->pluralize($page))."Controller.php";
+
+			// Create Helper
+		if(!file_exists($helper)) {
+			$helper_open = fopen($helper, 'w');
+			$helper_data = "<?php
+class ".ucfirst($inflect->pluralize($page))."Helper extends ApplicationHelper {
+
+}";
+			$helper_write = fwrite($helper_open, $helper_data);
+			$helper_close = fclose($helper_open);
+			echo "\n\t CREATED :: ".ucfirst($inflect->pluralize($page))."_helper.php";
+		}
+		
+			// Create Model
+		if(!file_exists($model)) {
+			$model_open = fopen($model, 'w');
+			$model_data = "<?php
+class ".ucfirst($inflect->singularize($page))." extends ApplicationModel {
+
+}";
+			$model_write = fwrite($model_open, $model_data);
+			$model_close = fclose($model_open);
+			echo "\n\t CREATED :: ".$page.".php";
+		}
+
+			// Create Views
+		$make_views = mkdir(VIEWS.$inflect->pluralize($page));
+		if($make_views) {
+			foreach($action_array as $a) {
+				if($app['haml'] != true) {
+					$view_open = fopen(VIEWS.$inflect->pluralize($page).'/'.$a.'.html.orc', 'w');
+					$view_data = "<h3>".$inflect->pluralize($page)."/".$a." created. To edit open mvc/views/".$inflect->pluralize($page)."/".$a.".html.orc</h3>";
+					$view_write = fwrite($view_open, $view_data);
+					$view_close = fclose($view_open);
+					echo "\n\t CREATED :: ".$a.".html.orc";
+				} else {
+					$view_open = fopen(VIEWS.$inflect->pluralize($page).'/'.$a.'.html.haml', 'w');
+					$view_data = "%h3 ".$inflect->pluralize($page)."/".$a." created. To edit open mvc/views/".$inflect->pluralize($page)."/".$a.".html.haml";
+					$view_write = fwrite($view_open, $view_data);
+					$view_close = fclose($view_open);
+					echo "\n\t CREATED :: ".$a.".html.haml";
+				}
+			}
+		}
+
+		if(file_exists($routes)) {
+			$route_open = fopen($routes, 'a');
+			$route_data = '
+$pages["'.$inflect->pluralize($page).'"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/index\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'index\', 
+); 
+
+$pages["'.$inflect->pluralize($page).'/$id"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/show\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'show\', 
+); 
+
+$pages["'.$inflect->pluralize($page).'/new"] = array(
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/new_item\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'new_item\',
+);
+
+$pages["'.$inflect->pluralize($page).'/create"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/create\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'create\', 
+); 
+
+$pages["'.$inflect->pluralize($page).'/$id/edit"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/edit\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'edit\', 
+); 
+
+$pages["'.$inflect->pluralize($page).'/update"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/update\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'update\', 
+);
+
+$pages["'.$inflect->pluralize($page).'/$id/destroy"] = array( 
+	 \'url\'         	=> \'/'.$inflect->pluralize($page).'/destroy\', 
+	 \'controller\'		=> \''.$inflect->pluralize($page).'\', 
+	 \'action\'      	=> \'destroy\', 
+);			
+';
+			$route_write = fwrite($route_open, $route_data);
+			$route_close = fclose($route_open);
+			echo "\n\t EDITED :: routes.php";
+		}
+		
+		$title = "Create".ucfirst($inflect->pluralize($page));
+		$file_name = "create_".$inflect->pluralize($page).".php";
+		$migrate_open = fopen(DB.'migrate/'.$file_name, 'w');
+		$migrate_data = "<?php
+class ".$title." {
+	
+	public function __construct() {
+		\$this->self_up();
+	}
+	
+	public function self_up() {
+		\$query = array(
+			".$db_columns."
+		);
+		\$db = new Database();
+		\$db->up('".$inflect->pluralize($page)."', \$query);
+	}
+
+	public function self_down() {
+		\$db = new Database();
+		\$db->down('".$inflect->pluralize($page)."');
+	}
+}";
+		$migrate_write = fwrite($migrate_open, $migrate_data);
+		$migrate_close = fclose($migrate_open);
+		echo "\n\t CREATED :: ".$file_name."";
+		
+		$test_name = ucfirst($inflect->pluralize($page))."Test";
+		$test_open = fopen($test, 'w');
+		$test_data = '<?php
+require_once("Test_Helper.php");
+require_once(MODELS."'.$inflect->singularize($page).'.php");
+class '.$test_name.' extends TestHelper {
+
+	public function testSetup() {
+
+	}
+
+	/**
+	 * @depends testSetup
+	 */
+	public function testStart() {
+		$this->assertTrue(true);
+	}
+
+}';
+		$test_write = fwrite($test_open, $test_data);
+		$test_close = fclose($test_open);
+		echo "\n\t CREATED :: ".$test_name.".php";
+		
+	}
+	echo "\n\t All Finished! \n\n";
+	
+}
+

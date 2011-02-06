@@ -1,0 +1,82 @@
+#!/usr/bin/php
+<?php
+/**
+* DB Script 
+*
+* Fired from the CMD Line using 'php script/db'
+* This is run many different commands relating to Database logic
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+
+require(dirname(dirname(__FILE__))."/config/definitions.php");
+require(dirname(dirname(__FILE__)).'/lib/drivers/mysql.php');
+
+date_default_timezone_set('UTC');
+
+if(isset($argv[1])){
+	if($argv[1] == '--help') {
+
+		$file = include('/usr/local/orchestra/man/scripts/db');
+		echo $file;
+
+	} elseif($argv[1] == 'migrate') {
+		echo "\nStarted \n";
+		$directory = DB."migrate";
+		$results = array();
+		$handler = opendir($directory);
+		while ($file = readdir($handler)) {
+			if ($file != "." && $file != ".." && $file != ".DS_Store") {
+				$files[] = $file;
+			}
+		}
+		closedir($handler);
+		foreach($files as $f) {
+			require($directory."/".$f);
+			$fname = str_replace('create_', '', str_replace('.php', '', $f));
+			$class_name = ucfirst("Create").ucfirst($fname);
+			$fname = new $class_name();
+			echo "\n------------------------------------------------------\n";
+			echo " ".$class_name." Created! \n ".date('l jS \of F Y h:i:s A');
+			echo "\n------------------------------------------------------\n";
+		}
+		echo "\nAll finished \n\n";
+	} elseif($argv[1] == 'drop') {
+		echo "\nStarted \n";
+		$directory = DB."migrate";
+		$results = array();
+		$handler = opendir($directory);
+		while ($file = readdir($handler)) {
+			if ($file != "." && $file != "..") {
+				$files[] = $file;
+			}
+		}
+		closedir($handler);
+		
+		foreach($files as $f) {
+			require($directory."/".$f);
+			$fname = str_replace('create_', '', str_replace('.php', '', $f));
+			$su_name = ucfirst($fname);
+			$class_name = ucfirst("Create").ucfirst($fname);
+			$fname = new $class_name();
+			$fname->self_down();
+			echo "\n------------------------------------------------------\n";
+			echo " ".$su_name." Table Removed. \n ".date('l jS \of F Y h:i:s A');
+			echo "\n------------------------------------------------------\n";
+		}
+		echo "\nAll finished \n\n";
+	} elseif($argv[1] == 'seed') {
+		$db = New Database();
+		require(DB."seed.php");
+		echo "\n All Finished \n\n";
+	}
+}	else {
+	echo "\n You need to have some sort of query \n Try running 'php script/db --help'  \n\n";
+}

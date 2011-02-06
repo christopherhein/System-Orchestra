@@ -1,0 +1,74 @@
+#!/usr/bin/php
+<?php
+/**
+* Deploy Script 
+*
+* Fired from thw CMD Line using 'php script/deploy'
+* Variables may be passed in for db merging and db rebuilding on the live server
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+define('ROOT', dirname(dirname(__FILE__)));
+
+	// Get Datafrom deploy File
+include(ROOT.'/config/deploy.php');	
+include(ROOT.'/config/config.php');
+
+if($argv[1] == '--help') {
+
+	$file = include('/usr/local/orchestra/man/scripts/deploy');
+	echo $file;
+
+} else {
+	$app = str_replace(' ', '-', $deploy['application']);
+	$time = time();
+	$basepath = $app['base_path'];
+	
+	$conf_open = fopen('config/config.php', 'r+');
+	$conf = file_get_contents('config/config.php');
+	$change_status = str_replace('$app[\'status\'] = \'development\'', '$app[\'status\'] = \'production\'', $conf);
+	$conf_data = str_replace('$app[\'base_path\'] = \''.$app['base_path'].'\'', '$app[\'base_path\'] = \''.$deploy['live-url'].'\'', $change_status);
+	$conf_write = fwrite($conf_open, $conf_data);
+	$conf_close = fclose($conf_open);
+	
+	echo "\nDeploy Initialized";
+	echo "\nPushing Latest Files to the git repository\n";
+	echo exec('git add * && git commit -a -m "'.$argv[1].'" && git push');
+	echo "\n\nConnecting to server\n\n";
+	if(isset($argv[2]) && $argv[2] == '--initial') {
+		echo exec('ssh '.$deploy['user'].'@'.$deploy['server'].' "cd '.$deploy['location'].' ; mkdir releases ; git clone '.$deploy['repository'].' ; mv '.$app.'/ latest ; cd latest/ ; php script/cache clear ; rm -rf script/ .git/ tmp/cache/* tmp/logs/* tmp/sessions/* README TODO docs/ test/ ;"');
+	} else {
+		echo exec('ssh '.$deploy['user'].'@'.$deploy['server'].' "cd '.$deploy['location'].' ; mv latest/ releases/'.$time.' ; git clone '.$deploy['repository'].' ; mv '.$app.'/ latest ; cd latest/ ; php script/cache clear ; rm -rf script/ .git/ tmp/cache/* tmp/logs/* tmp/sessions/* README TODO docs/ test/ ;"');
+	}
+	if(!is_dir('deploy')) {
+		mkdir('deploy');
+	}
+	if(file_exists('deploy/deploy.log')) {
+		$log_open = fopen('deploy/deploy.log', 'a');
+		$log_data = "\n====================== $time Deploy =============================\n";
+		$log_data .= "\n	Deploy Message:";
+		$log_data .= "\n	".$argv[1]."\n";
+		$log_data .= "\n	Application Live at: ".$app['base_path']."\n";
+		$log_data .= "\n====================== End Deploy =============================\n\n";
+		$log_write = fwrite($log_open, $log_data);
+		$log_close = fclose($log_open);
+	}
+	
+	$conf_open = fopen('config/config.php', 'r+');
+	$conf = file_get_contents('config/config.php');
+	$change_status = str_replace('$app[\'status\'] = \'production\'', '$app[\'status\'] = \'development\'', $conf);
+	$conf_data = str_replace('$app[\'base_path\'] = \''.$deploy['live-url'].'\'', '$app[\'base_path\'] = \''.$basepath.'\'', $change_status);
+	$conf_write = fwrite($conf_open, $conf_data);
+	$conf_close = fclose($conf_open);
+	
+	echo "\n\n===============================================";
+	echo "\n\n Your Updated Application is now live!";
+	echo "\n\n===============================================\n\n";
+}

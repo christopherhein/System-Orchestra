@@ -1,0 +1,45 @@
+/**
+* README File
+*
+* Just getting started with Orchestra PHP APP, start here 
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/todo/
+*
+*/
+
+Schema!
+
+Generator:
+php script/generate controller __controller_name__ "__each__,__action__,__you__,__want__,__to__,__create__"
+php script/generate resource __resource_name__ {__data_types__:__titles__}
+
+Destory:
+php script/destroy controller __controller_name__ "__each__,__action__,__you__,__want__,__to__,__create__"
+
+DB Migrate:
+php script/db migrate
+
+DB Drop:
+php script/db drop
+
+DB Seed:
+php script/db seed
+
+Instruments:
+php script/install [plugin_name]
+
+
+New Instruments Structure:
+/directory
+  ./installation.php.orc
+  ./module_name.php.orc
+  ./docs
+    ./instructions.html.orc
+  ./files
+    ./all_files.php

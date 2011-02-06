@@ -1,0 +1,36 @@
+#!/usr/bin/php
+<?php
+/**
+* Upload Script 
+*
+* Fired from the CMD Line using 'php script/upload'
+* This is to make the frontend/ editable with the php uploader
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+
+require(dirname(dirname(__FILE__))."/config/definitions.php");
+
+date_default_timezone_set('UTC');
+
+if(isset($argv[1])){
+	if($argv[1] == '--help') {
+
+		$file = include('/usr/local/orchestra/man/scripts/upload');
+		echo $file;
+
+	} elseif($argv[1] == 'setup') {
+		echo "\nSetting Up Uploader\n";
+		exec("chmod -R 777 frontend/ ;");
+		echo "All finished!\n\n";
+	}
+}	else {
+	echo "\n You need to have some sort of query \n Try running 'php script/cache --help  \n\n";
+}

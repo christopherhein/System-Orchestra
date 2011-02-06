@@ -1,0 +1,7 @@
+AddType application/x-httpd-php .orc
+
+<IfModule mod_rewrite.c>
+   RewriteEngine on
+   RewriteRule    ^$    frontend/    [L]
+   RewriteRule    (.*) frontend/$1    [L]
+ </IfModule>

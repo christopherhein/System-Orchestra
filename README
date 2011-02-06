@@ -1,0 +1,74 @@
+/**
+* Orchestra MVC php System Installer
+*
+* This is some basic information about Orchestra and how to set it up.
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/
+*
+*/
+
+Installer for Orchestra MVC CLI
+
+Installation:
+Open up terminal and run through these commands.
+
+  Clone this Repository:
+
+    1) $ git clone git://github.com/christopherhein/system-orchestra-mvc.git
+
+  Go into the new directory:
+    
+    2) $ cd system-orchestra-mvc
+
+  Run the Installer
+    
+    3) $ php install
+    
+If there are no problems with the install you should be able to run:
+
+  $ orchestra new __project_name__;
+
+To use instruments you need to pull them into your instruments folder, don't worry I made this really easy.
+To do so you need to first find the instrument name from my GitHub account:
+  
+  https://github.com/christopherhein
+
+For this example we'll use the twitter-addon.instrument
+  
+  https://github.com/christopherhein/twitter-addon.instrument
+  
+To pull instruments use:
+
+  $ instrument pull twitter-addon
+
+As long as there where no problems through out this installation you should now be able to use this instrument in your application.
+
+Building your first app:
+
+  Create Application
+  
+    1) $ orcheastra new twitter_app
+    
+  Enter the directory
+  
+    2) $ cd twitter_app/
+    
+  Install the Twitter Addon
+  
+    3) $ instrument install twitter-addon
+    
+  This will than prompt you with some instructions to complete the installation, follow these, and than run the app.
+  
+Other:
+As far as this Framework goes it is version 0.0.1:beta so beware their may be bugs.
+
+Thank you!
+
+
+ 

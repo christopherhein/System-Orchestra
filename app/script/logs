@@ -1,0 +1,41 @@
+#!/usr/bin/php
+<?php
+/**
+* DB Script 
+*
+* Fired from the CMD Line using 'php script/db'
+* This is run many different commands relating to Database logic
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/script/deploy/
+*
+*/
+
+require(dirname(dirname(__FILE__))."/config/definitions.php");
+require(dirname(dirname(__FILE__)).'/lib/drivers/mysql.php');
+
+date_default_timezone_set('UTC');
+
+if(isset($argv[1])){
+	if($argv[1] == '--help') {
+
+		$file = include('/usr/local/orchestra/man/scripts/logs');
+		echo $file;
+
+	} elseif($argv[1] == 'clear') {
+		echo "\nClearing Cache\n";
+		exec("rm -rf tmp/logs ;");
+		echo "Rebuilding Directory\n";
+		exec("mkdir tmp/logs/ ;");
+		echo "Setting Permissions\n";
+		exec("chmod -R 777 tmp/ ;");
+		echo "All finished!\n\n";
+	}
+}	else {
+	echo "\n You need to have some sort of query \n Try running 'php script/log --help  \n\n";
+}

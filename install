@@ -1,0 +1,31 @@
+#!/usr/bin/php
+<?php
+/**
+* Orchestra Core
+*
+* Intall script this is run from the cmd line to fully install this module into your orchestra application.
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/
+*
+*/
+
+echo "\nInstalling Orchestra MVC!\n";
+exec("mkdir /usr/local/orchestra/ ;");
+echo "Created /usr/local/orchestra/\n";
+exec("cp -r app/ /usr/local/orchestra/app/ ;");
+echo "Moved app/\n";
+exec("cp -r instruments/ /usr/local/orchestra/instruments/ ;");
+echo "Moved instruments/\n";
+exec("cp -r man/ /usr/local/orchestra/man/ ;");
+echo "Moved man/\n";
+exec("cp instrument /usr/local/bin/instrument ;");
+echo "Moved instrument\n";
+exec("cp orchestra /usr/local/bin/orchestra ;");
+echo "Moved orchestra\n";
+echo "All Finished!\n\n";

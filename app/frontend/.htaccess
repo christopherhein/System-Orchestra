@@ -1,0 +1,14 @@
+AddType application/x-httpd-php .orc
+
+ErrorDocument 404 /404.php
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{QUERY_STRING} (.*)
+
+RewriteRule ^(.*)$ index.php?url=$1&%1 [PT]
+
+</IfModule>

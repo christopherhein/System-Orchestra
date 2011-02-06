@@ -1,0 +1,35 @@
+#!/usr/bin/php
+<?php
+/**
+* Orchestra Script 
+*
+* Fired from the CMD Line using 'php orchestra'
+* This will make sure that any and all instruments in the instruments in the instruments.orc are installed
+*
+* Licensed under the MIT license.
+*
+* @category   Orchestra
+* @copyright  Copyright (c) 2010, Christopher Hein
+* @license    http://orchestramvc.chrishe.in/license
+* @version    Release: 0.0.1:beta
+* @link       http://orchestramvc.chrishe.in/docs/orchestra/
+*
+*/
+
+include("instruments.orc");
+
+echo "\nInstalling Necessary Instruments\n\n";
+
+if($orchestra['app'] == 'orchestra-mvc') { unset($orchestra['app']); }
+if($orchestra['database'] == 'mysql') { unset($orchestra['database']); }
+
+foreach($orchestra as $key => $value) {
+	if(!file_exists("instruments/$value.instrument")) {
+		echo "\tInstalling $key -> $value \n";
+		system("instrument install $value ;");	
+	} else {
+		echo "\tInstrument $key -> $value Installed\n";
+	}
+}
+
+echo "\nAll finished\n\n";
